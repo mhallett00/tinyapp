@@ -38,22 +38,26 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-// Redirect to the original URL
+// Redirect to the original URL when clicking on a shortURL from it's creation route
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 
-// enters a random key into the database for the new shortURL. Also redirects.
+// enters a random key into the database for the new shortURL. Also redirects to the shortURL's creation route
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString()
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
 
+// deletes a short URL entry from the urlDatabase
+app.post("/urls/:shortURL/delete", (req,res) => {
+  delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+})
 
 app.get(("/urls/:shortURL", (req, res) => {
-
   res.render("urls_show", templateVars);
 }));
 
