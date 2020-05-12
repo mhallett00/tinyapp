@@ -38,10 +38,24 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send(`http//:www.TinyApp.com/${generateRandomString()}`);
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  // console.log(req.body)
+  // console.log(urlDatabase);
+  res.redirect(longURL);
 });
+
+app.post("/urls", (req, res) => {
+  let shortURL = generateRandomString()
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
+
+app.get(("/urls/:shortURL", (req, res) => {
+
+  res.render("urls_show", templateVars);
+}));
 
 app.get("/urls/new", (req,res) =>{
   res.render("urls_new");
