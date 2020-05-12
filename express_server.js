@@ -12,6 +12,15 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+function generateRandomString() {
+const alphaNumString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+let randomString = '';
+  for (i = 0; i < 6; i++) {
+    randomString += alphaNumString[Math.floor(Math.random() * alphaNumString.length)]
+  } 
+return randomString;
+};
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -31,7 +40,7 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body);
-  res.send("Ok");
+  res.send(`http//:www.TinyApp.com/${generateRandomString()}`);
 });
 
 app.get("/urls/new", (req,res) =>{
