@@ -38,13 +38,13 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// Redirect to the original URL
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
-  // console.log(req.body)
-  // console.log(urlDatabase);
   res.redirect(longURL);
 });
 
+// enters a random key into the database for the new shortURL. Also redirects.
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString()
   urlDatabase[shortURL] = req.body.longURL;
