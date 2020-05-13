@@ -16,7 +16,13 @@ const urlDatabase = {
 };
 
 // Users database
-const users = {};
+const users = {
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  }
+};
 
 function generateRandomString() {
 const alphaNumString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -30,10 +36,12 @@ return randomString;
 function checkIfEmailExists(users, email) {
   for (let id in users) {
     if (users[id].email === email) {
-      return true;
+      return users[id];
     } 
   }
 };
+
+// function checkIfPasswordsMatch(
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -71,15 +79,21 @@ app.post("/register", (req, res) => {
     res.cookie("user_id", randomUserID);
     res.redirect("/urls");
   } else {
-    res.status(400).send("Invalid entry or account already registered!");
+    res.status(400).send("Error 400\nInvalid entry or account already registered!");
     
   }
 })
 
 app.post("/login", (req, res) => {
-  // res.cookie("user_id", req.body.username )
-  res.redirect("/urls")
+  const user = checkIfEmailExists(users, req.body.email)
+  if (user && user.password === req.body.password) {
+      res.cookie("user_id", user.id);
+      res.redirect("/urls");
+  } else {
+    res.status(403).send("Error 403\nEmail not found or password incorrect! Please try again or register!")
+  }
 })
+
 app.get("/login", (req, res) => {
 let templateVars = {
   user: users[req.cookies["user_id"]]
@@ -88,7 +102,7 @@ let templateVars = {
 })
 
 app.post("/logout", (req, res) => {
-  // res.clearCookie("user_id")
+  res.clearCookie("user_id")
   res.redirect("/urls")
 })
 
