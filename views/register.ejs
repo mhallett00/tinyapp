@@ -13,16 +13,16 @@
 
     <%- include('../partials/_header') %>
 
-    <main class="form container" style="margin: 1em">
+    <main class="form" style="margin: 1em">
       <form action="/register" method="POST">
         <h1>TinyApp Account Registration</h1>
         <p>Please fill out the form below to create an account with us!</p>
-        <div class="form container">
-          <label style="margin: 10px" for="email">Email</label>
-          <input class="form-control" type="email" name="email" placeholder="Enter Email" style="width: 300px">
-          <label style="margin: 10px"for="password">Password</label>
-          <input class="form-control" type="password" name="password" placeholder="Enter Password" style="width: 300px">
-          <button type="submit" style="margin: 1em" class="btn btn-primary">Register!</button>
+        <div class="form">
+          <label for="email">Email</label>
+          <input class="form-control" type="email" name="email" placeholder="Enter Email" style="width: 300px; margin-bottom: 1em">
+          <label for="password">Password</label>
+          <input class="form-control" type="password" name="password" placeholder="Enter Password" style="width: 300px; margin-bottom: 1em">
+          <button type="submit" class="btn btn-primary">Register!</button>
         </div>
       </form>
     </main>
