@@ -13,15 +13,18 @@
     <% if (user) { %>
       <form class="form-inline" action="/logout" method="POST">
         <label style="margin: 1em" for="longURL">You are logged in as: <%= user.email %>!</label>
-        <button type="submit" class="btn btn-outline-dark">Logout</button>
+        <button type="submit" class="btn btn-dark">Logout</button>
       </form>
     <% } else { %>
-    <form class="form-inline" action="/login" method="POST">
-      <div class="form-group mb-2">
-          <input class="form-control" type="text" name="username" placeholder="Username" style="width: 300px; margin: 1em">
-        <button type="submit" class="btn btn-outline-dark">Login</button>
+      <div class="navbar-nav">
+        <a class="nav-item nav-link" href="/login">Login</a>
+        <a class="nav-item nav-link" href="/register">Register</a>
       </div>
-    </form>
+        <!-- <a href="/login" style="margin: 2px" class="btn btn-dark">Login</a>
+        <a href="/register" style="margin: 2px" class="btn btn-dark">Register</a> -->
+      <!-- <form action="/register" method="GET">
+        <button type="submit" style="margin: 2px" class="btn btn-dark">Register</button>
+      </form> -->
     <% } %>
   </nav>
 </header>
