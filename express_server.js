@@ -12,7 +12,7 @@ const cookieSession = require('cookie-session');
 
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(cookieSession({
-  name: 'session', 
+  name: 'session',
   keys: ['key1','key2']
 }));
 
@@ -51,9 +51,9 @@ app.get("/urls.json", (req, res) => {
 
 //shows urls for the logged in user, asks to register/login for visitors/logged out users
 app.get("/urls", (req, res) => {
-  let templateVars = { 
+  let templateVars = {
     user: users[req.session["user_id"]],
-    urls: urlsByUser(urlDatabase, req.session["user_id"]) 
+    urls: urlsByUser(urlDatabase, req.session["user_id"])
   };
 
   res.render("urls_index", templateVars);
@@ -70,7 +70,7 @@ app.get("/register", (req, res) => {
 
 // registers a new user under a unique ID if not currently in the user database
 app.post("/register", (req, res) => {
-  if(req.body.email && req.body.password && !getUserByEmail(users, req.body.email)) {
+  if (req.body.email && req.body.password && !getUserByEmail(users, req.body.email)) {
     let userID = generateRandomString();
     users[userID] = {
       id: userID,
@@ -82,32 +82,32 @@ app.post("/register", (req, res) => {
   } else {
     res.status(400).send("Error 400\nInvalid entry or account already registered!");
   }
-})
+});
 
 // checks databse for registered user and logs them in
 app.post("/login", (req, res) => {
-  const user = getUserByEmail(users, req.body.email)
+  const user = getUserByEmail(users, req.body.email);
   if (user && bcrypt.compareSync(req.body.password, user.password)) {
-      req.session["user_id"] = user.id;
-      res.redirect("/urls");
+    req.session["user_id"] = user.id;
+    res.redirect("/urls");
   } else {
-    res.status(403).send("Error 403\nEmail not found or password incorrect! Please try again or register!")
+    res.status(403).send("Error 403\nEmail not found or password incorrect! Please try again or register!");
   }
-})
+});
 
 // Gets login form
 app.get("/login", (req, res) => {
-let templateVars = {
-  user: users[req.session["user_id"]]
-};
+  let templateVars = {
+    user: users[req.session["user_id"]]
+  };
   res.render("login", templateVars);
-})
+});
 
 // Logout user, clears cookie
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect("/urls")
-})
+  res.redirect("/urls");
+});
 
 // redirect to the original URL when clicking on a shortURL from it's creation route
 app.get("/u/:shortURL", (req, res) => {
@@ -118,15 +118,15 @@ app.get("/u/:shortURL", (req, res) => {
 // posts edits to the original url for logged in users editing their short URL. Redirects in the case of logged out users
 app.post("/urls/:id", (req,res) => {
   if (urlDatabase[req.params.id].userID === req.session["user_id"]) {
-  urlDatabase[req.params.id].longURL = req.body.longURL
-}
-  res.redirect("/urls")
+    urlDatabase[req.params.id].longURL = req.body.longURL;
+  }
+  res.redirect("/urls");
 
-})
+});
 
 // enters a random key into the database for the new shortURL. Also redirects to the shortURL's creation route
 app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString()
+  let shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     userID: req.session["user_id"]
@@ -138,10 +138,10 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:shortURL/delete", (req,res) => {
   if (urlDatabase[req.params.shortURL].userID === users[req.session["user_id"]].id) {
     delete urlDatabase[req.params.shortURL];
-  };
+  }
 
   res.redirect("/urls");
-})
+});
 
 // // shows the short URL page
 // app.get(("/urls/:shortURL", (req, res) => {
@@ -155,23 +155,23 @@ app.post("/urls/:shortURL/delete", (req,res) => {
 app.get("/urls/new", (req,res) =>{
   let templateVars = {
     user: users[req.session["user_id"]]
-  }
+  };
   if (users[req.session["user_id"]]) {
     res.render("urls_new", templateVars);
   } else {
-    res.redirect("/login")
+    res.redirect("/login");
   }
 });
 
 // shows the short URL entry
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { 
-    user: users[req.session["user_id"]], 
-    shortURL: req.params.shortURL, 
+  let templateVars = {
+    user: users[req.session["user_id"]],
+    shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL
   };
   res.render("urls_show", templateVars);
-})
+});
 
 
 app.listen(PORT, () => {
