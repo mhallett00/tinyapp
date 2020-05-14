@@ -10,17 +10,14 @@ app.use(cookie());
 
 app.set("view engine", "ejs");
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
+const urlDatabase = {};
 
 // Users database
 const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: "dinosaur"
   }
 };
 
@@ -40,8 +37,6 @@ function checkIfEmailExists(users, email) {
     } 
   }
 };
-
-// function checkIfPasswordsMatch(
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -108,25 +103,42 @@ app.post("/logout", (req, res) => {
 
 // Redirect to the original URL when clicking on a shortURL from it's creation route
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
 app.post("/urls/:id", (req,res) => {
-  urlDatabase[req.params.id] = req.body.longURL
+  // console.log(req.cookies["user_id"])
+  // console.log(req.params)
+  // console.log(urlDatabase[req.params.id].userID)
+  console.log(req.body.longURL)
+
+  if (urlDatabase[req.params.id].userID === req.cookies["user_id"]) {
+  urlDatabase[req.params.id].longURL = req.body.longURL
+}
   res.redirect("/urls")
+
 })
 
 // enters a random key into the database for the new shortURL. Also redirects to the shortURL's creation route
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString()
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: req.cookies["user_id"]
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
-// deletes a short URL entry from the urlDatabase
+// deletes a short URL entry from the urlDatabase updated to prevent others from deleting content
 app.post("/urls/:shortURL/delete", (req,res) => {
-  delete urlDatabase[req.params.shortURL];
+  // console.log(users[req.cookies["user_id"]].id)
+  // console.log(urlDatabase[req.params])
+  // console.log(urlDatabase[req.params.shortURL].userID)
+
+  if (urlDatabase[req.params.shortURL].userID === users[req.cookies["user_id"]].id) {
+    delete urlDatabase[req.params.shortURL];
+  };
   res.redirect("/urls");
 })
 
@@ -141,7 +153,11 @@ app.get("/urls/new", (req,res) =>{
   let templateVars = {
     user: users[req.cookies["user_id"]]
   }
-  res.render("urls_new", templateVars);
+  if (users[req.cookies["user_id"]]) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login")
+  }
 });
 
 
@@ -149,7 +165,7 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { 
     user: users[req.cookies["user_id"]], 
     shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL] 
+    longURL: urlDatabase[req.params.shortURL].longURL
   };
   res.render("urls_show", templateVars);
 })
