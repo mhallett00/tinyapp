@@ -3,7 +3,8 @@ const bodyParser = require("body-parser");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookie = require('cookie-parser');
-
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(cookie());
@@ -13,13 +14,7 @@ app.set("view engine", "ejs");
 const urlDatabase = {};
 
 // Users database
-const users = {
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "dinosaur"
-  }
-};
+const users = {};
 
 function generateRandomString() {
 const alphaNumString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -69,8 +64,11 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   if(req.body.email && req.body.password && !checkIfEmailExists(users, req.body.email)) {
     let randomUserID = generateRandomString();
-    users[randomUserID] = req.body;
-    users[randomUserID].id = randomUserID;
+    users[randomUserID] = {
+      id: randomUserID,
+      email: req.body.email,
+      password: bcrypt.hashSync(req.body.password, saltRounds)
+    };
     res.cookie("user_id", randomUserID);
     res.redirect("/urls");
   } else {
@@ -81,7 +79,7 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
   const user = checkIfEmailExists(users, req.body.email)
-  if (user && user.password === req.body.password) {
+  if (user && bcrypt.compareSync(req.body.password, user.password)) {
       res.cookie("user_id", user.id);
       res.redirect("/urls");
   } else {
@@ -108,11 +106,6 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:id", (req,res) => {
-  // console.log(req.cookies["user_id"])
-  // console.log(req.params)
-  // console.log(urlDatabase[req.params.id].userID)
-  console.log(req.body.longURL)
-
   if (urlDatabase[req.params.id].userID === req.cookies["user_id"]) {
   urlDatabase[req.params.id].longURL = req.body.longURL
 }
