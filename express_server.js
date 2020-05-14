@@ -1,15 +1,16 @@
+// WELCOME TO TINYAPP!
+// --------------------------------------------------------
+// REQUIRE, USE, SET
+// --------------------------------------------------------
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
-// const cookie = require('cookie-parser');
 const bcrypt = require('bcrypt');
 const cookieSession = require('cookie-session');
 
-const PORT = 8080; // default port 8080
-const saltRounds = 10;
 
 app.use(bodyParser.urlencoded({extended:true}));
-// app.use(cookie());
 app.use(cookieSession({
   name: 'session', 
   keys: ['key1','key2']
@@ -17,74 +18,59 @@ app.use(cookieSession({
 
 app.set("view engine", "ejs");
 
-const urlDatabase = {};
+// --------------------------------------------------------
+// GLOBAL CONSTANTS
+// --------------------------------------------------------
 
-// Users database
+const saltRounds = 10;
+const PORT = 8080;
+const {
+  getUserByEmail,
+  generateRandomString,
+  urlsByUser
+} = require('./helpers');
+
+// --------------------------------------------------------
+// DATABASE DECLARATIONS
+// --------------------------------------------------------
+
+const urlDatabase = {};
 const users = {};
 
-function generateRandomString() {
-const alphaNumString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-let randomString = '';
-  for (i = 0; i < 6; i++) {
-    randomString += alphaNumString[Math.floor(Math.random() * alphaNumString.length)]
-  } 
-return randomString;
-};
-
-function checkIfEmailExists(users, email) {
-  for (let id in users) {
-    if (users[id].email === email) {
-      return users[id];
-    } 
-  }
-};
-
-function urlsByUser(urls, user) {
-  const userURLS = {};
-
-  for (url in urls) {
-    // console.log(urls[url].userID, user)
-    if (urls[url].userID === user) {
-     userURLS[url] = urls[url]
-    }
-  }
-  return userURLS;
-}
+// --------------------------------------------------------
+// TINYAPP ROUTING
+// --------------------------------------------------------
 
 app.get("/", (req, res) => {
   res.send("Hello!");
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+//shows urls for the logged in user, asks to register/login for visitors/logged out users
 app.get("/urls", (req, res) => {
-  // console.log(req.session);
-  // console.log(req.session["user_id"]);
   let templateVars = { 
     user: users[req.session["user_id"]],
     urls: urlsByUser(urlDatabase, req.session["user_id"]) 
   };
 
-  console.log(templateVars.urls)
   res.render("urls_index", templateVars);
 });
 
+// gets the registration form
 app.get("/register", (req, res) => {
   let templateVars = {
     user: users[req.session["user_id"]]
   };
-console.log(req.session);
+
   res.render("register", templateVars);
 });
 
+// registers a new user under a unique ID if not currently in the user database
 app.post("/register", (req, res) => {
-  if(req.body.email && req.body.password && !checkIfEmailExists(users, req.body.email)) {
+  if(req.body.email && req.body.password && !getUserByEmail(users, req.body.email)) {
     let userID = generateRandomString();
     users[userID] = {
       id: userID,
@@ -95,12 +81,12 @@ app.post("/register", (req, res) => {
     res.redirect("/urls");
   } else {
     res.status(400).send("Error 400\nInvalid entry or account already registered!");
-    
   }
 })
 
+// checks databse for registered user and logs them in
 app.post("/login", (req, res) => {
-  const user = checkIfEmailExists(users, req.body.email)
+  const user = getUserByEmail(users, req.body.email)
   if (user && bcrypt.compareSync(req.body.password, user.password)) {
       req.session["user_id"] = user.id;
       res.redirect("/urls");
@@ -109,6 +95,7 @@ app.post("/login", (req, res) => {
   }
 })
 
+// Gets login form
 app.get("/login", (req, res) => {
 let templateVars = {
   user: users[req.session["user_id"]]
@@ -116,17 +103,19 @@ let templateVars = {
   res.render("login", templateVars);
 })
 
+// Logout user, clears cookie
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls")
 })
 
-// Redirect to the original URL when clicking on a shortURL from it's creation route
+// redirect to the original URL when clicking on a shortURL from it's creation route
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
+// posts edits to the original url for logged in users editing their short URL. Redirects in the case of logged out users
 app.post("/urls/:id", (req,res) => {
   if (urlDatabase[req.params.id].userID === req.session["user_id"]) {
   urlDatabase[req.params.id].longURL = req.body.longURL
@@ -145,25 +134,24 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// deletes a short URL entry from the urlDatabase updated to prevent others from deleting content
+// deletes a short URL entry from the urlDatabase if the logged in user owns the short URL
 app.post("/urls/:shortURL/delete", (req,res) => {
-  // console.log(users[req.cookies["user_id"]].id)
-  // console.log(urlDatabase[req.params])
-  // console.log(urlDatabase[req.params.shortURL].userID)
-
   if (urlDatabase[req.params.shortURL].userID === users[req.session["user_id"]].id) {
     delete urlDatabase[req.params.shortURL];
   };
+
   res.redirect("/urls");
 })
 
-app.get(("/urls/:shortURL", (req, res) => {
-  let templateVars = {
-    user: users[req.session["user_id"]]
-  }
-  res.render("urls_show", templateVars);
-}));
+// // shows the short URL page
+// app.get(("/urls/:shortURL", (req, res) => {
+//   let templateVars = {
+//     user: users[req.session["user_id"]]
+//   }
+//   res.render("urls_show", templateVars);
+// }));
 
+// gets the new URL form to create a short URL for logged in users.
 app.get("/urls/new", (req,res) =>{
   let templateVars = {
     user: users[req.session["user_id"]]
@@ -175,7 +163,7 @@ app.get("/urls/new", (req,res) =>{
   }
 });
 
-
+// shows the short URL entry
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { 
     user: users[req.session["user_id"]], 
