@@ -6,14 +6,14 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
-const bcrypt = require('bcrypt');
-const cookieSession = require('cookie-session');
+const bcrypt = require("bcrypt");
+const cookieSession = require("cookie-session");
 
 
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(cookieSession({
-  name: 'session',
-  keys: ['key1','key2']
+  name: "session",
+  keys: ["key1","key2"]
 }));
 
 app.set("view engine", "ejs");
@@ -28,7 +28,7 @@ const {
   getUserByEmail,
   generateRandomString,
   urlsByUser
-} = require('./helpers');
+} = require("./helpers");
 
 // --------------------------------------------------------
 // DATABASE DECLARATIONS
@@ -51,7 +51,7 @@ app.get("/urls.json", (req, res) => {
 
 //shows urls for the logged in user, asks to register/login for visitors/logged out users
 app.get("/urls", (req, res) => {
-  let templateVars = {
+  const templateVars = {
     user: users[req.session["user_id"]],
     urls: urlsByUser(urlDatabase, req.session["user_id"])
   };
@@ -61,7 +61,7 @@ app.get("/urls", (req, res) => {
 
 // gets the registration form
 app.get("/register", (req, res) => {
-  let templateVars = {
+  const templateVars = {
     user: users[req.session["user_id"]]
   };
 
@@ -71,7 +71,7 @@ app.get("/register", (req, res) => {
 // registers a new user under a unique ID if not currently in the user database
 app.post("/register", (req, res) => {
   if (req.body.email && req.body.password && !getUserByEmail(users, req.body.email)) {
-    let userID = generateRandomString();
+    const userID = generateRandomString();
     users[userID] = {
       id: userID,
       email: req.body.email,
@@ -97,7 +97,7 @@ app.post("/login", (req, res) => {
 
 // Gets login form
 app.get("/login", (req, res) => {
-  let templateVars = {
+  const templateVars = {
     user: users[req.session["user_id"]]
   };
   res.render("login", templateVars);
@@ -126,7 +126,7 @@ app.post("/urls/:id", (req,res) => {
 
 // enters a random key into the database for the new shortURL. Also redirects to the shortURL's creation route
 app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
+  const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     userID: req.session["user_id"]
@@ -153,7 +153,7 @@ app.post("/urls/:shortURL/delete", (req,res) => {
 
 // gets the new URL form to create a short URL for logged in users.
 app.get("/urls/new", (req,res) =>{
-  let templateVars = {
+  const templateVars = {
     user: users[req.session["user_id"]]
   };
   if (users[req.session["user_id"]]) {
@@ -165,7 +165,7 @@ app.get("/urls/new", (req,res) =>{
 
 // shows the short URL entry
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = {
+  const templateVars = {
     user: users[req.session["user_id"]],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL

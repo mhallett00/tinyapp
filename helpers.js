@@ -12,8 +12,8 @@ const getUserByEmail = (users, email) => {
 
 // Returns a 6 digit "random" string
 const generateRandomString = () => {
-  const alphaNumString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let randomString = '';
+  const alphaNumString = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let randomString = "";
 
   for (let i = 0; i < 6; i++) {
     randomString += alphaNumString[Math.floor(Math.random() * alphaNumString.length)];
