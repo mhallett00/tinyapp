@@ -13,6 +13,7 @@
       <%- include('../partials/_header') %>
     </header>
     <main style="margin: 1em;">
+      <% if(user) { %>
       <h3>My URLs</h3>
       <table class="table">
         <thread>
@@ -24,7 +25,6 @@
           </tr>
         </thread>
         <tbody>
-          <% if(user) { %>
             <% for(let shortURL in urls) { %>
               <!-- <% if (user && urls[url].userID === user.id) { %> -->
                 <tr>
