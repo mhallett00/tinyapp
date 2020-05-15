@@ -1,4 +1,3 @@
-
 // Cross checks the users object by email and returns the randonly generated user ID key if the email already exists
 const getUserByEmail = (users, email) => {
   for (let user in users) {
@@ -41,5 +40,5 @@ const urlsByUser = (urls, user) => {
 module.exports = {
   generateRandomString,
   getUserByEmail,
-  urlsByUser
+  urlsByUser,
 };
