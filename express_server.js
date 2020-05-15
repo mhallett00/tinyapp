@@ -27,7 +27,6 @@ const PORT = 8080;
 const {
   getUserByEmail,
   generateRandomString,
-  isUserLoggedIn,
   urlsByUser
 } = require("./helpers");
 
@@ -43,7 +42,7 @@ const users = {};
 // --------------------------------------------------------
 
 app.get("/", (req, res) => {
-  if(req.session["user_id"]) {
+  if (req.session["user_id"]) {
     res.redirect("/urls");
   } else {
     res.redirect("login");
@@ -79,19 +78,19 @@ app.get("/register", (req, res) => {
 // registers a new user under a unique ID if not currently in the user database
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
-      res.status(400).send("Error 400\nPlease fill out the fields!");
-    } else if (getUserByEmail(users, req.body.email)){
-      res.status(400).send("Error 400\nAccount already exists!");
-    } else {
-      const userID = generateRandomString();
-      users[userID] = {
-        id: userID,
-        email: req.body.email,
-        password: bcrypt.hashSync(req.body.password, saltRounds)
-      };
-      req.session["user_id"] = userID;
-      res.redirect("/urls");
-    }
+    res.status(400).send("Error 400\nPlease fill out the fields!");
+  } else if (getUserByEmail(users, req.body.email)) {
+    res.status(400).send("Error 400\nAccount already exists!");
+  } else {
+    const userID = generateRandomString();
+    users[userID] = {
+      id: userID,
+      email: req.body.email,
+      password: bcrypt.hashSync(req.body.password, saltRounds)
+    };
+    req.session["user_id"] = userID;
+    res.redirect("/urls");
+  }
 });
 
 // checks databse for registered user and logs them in
@@ -135,7 +134,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 // posts edits to the original url for logged in users editing their short URL. Redirects in the case of logged out users
 app.post("/urls/:id", (req,res) => {
-  if(!req.session["user_id"]) {
+  if (!req.session["user_id"]) {
     res.status(403).send("Please login to edit short links!");
   } else if (urlDatabase[req.params.id].userID === users[req.session["user_id"]].id) {
     urlDatabase[req.params.id].longURL = req.body.longURL;
@@ -161,8 +160,7 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:shortURL/delete", (req,res) => {
   if (!req.session["user_id"]) {
     res.status(403).send("please log in to delete a short link!");
-  }
-  else if (urlDatabase[req.params.shortURL].userID === users[req.session["user_id"]].id) {
+  } else if (urlDatabase[req.params.shortURL].userID === users[req.session["user_id"]].id) {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
   } else {
@@ -192,7 +190,7 @@ app.get("/urls/:shortURL", (req, res) => {
   
   if (req.session['user_id'] === undefined) {
     res.status(403).send("No credentials! Please login or register!");
-  } else if (urlDatabase[req.params.shortURL] != undefined && req.session['user_id'] != urlDatabase[req.params.shortURL].userID) {
+  } else if (urlDatabase[req.params.shortURL] !== undefined && req.session['user_id'] !== urlDatabase[req.params.shortURL].userID) {
     res.status(403).send("You don't have permission to change this link!");
   }
 
