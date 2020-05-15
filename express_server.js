@@ -27,6 +27,7 @@ const PORT = 8080;
 const {
   getUserByEmail,
   generateRandomString,
+  isUserLoggedIn,
   urlsByUser
 } = require("./helpers");
 
@@ -42,7 +43,11 @@ const users = {};
 // --------------------------------------------------------
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if(req.session["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("login");
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -64,24 +69,29 @@ app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.session["user_id"]]
   };
-
-  res.render("register", templateVars);
+  if (req.session["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    res.render("register", templateVars);
+  }
 });
 
 // registers a new user under a unique ID if not currently in the user database
 app.post("/register", (req, res) => {
-  if (req.body.email && req.body.password && !getUserByEmail(users, req.body.email)) {
-    const userID = generateRandomString();
-    users[userID] = {
-      id: userID,
-      email: req.body.email,
-      password: bcrypt.hashSync(req.body.password, saltRounds)
-    };
-    req.session["user_id"] = userID;
-    res.redirect("/urls");
-  } else {
-    res.status(400).send("Error 400\nInvalid entry or account already registered!");
-  }
+  if (!req.body.email || !req.body.password) {
+      res.status(400).send("Error 400\nPlease fill out the fields!");
+    } else if (getUserByEmail(users, req.body.email)){
+      res.status(400).send("Error 400\nAccount already exists!");
+    } else {
+      const userID = generateRandomString();
+      users[userID] = {
+        id: userID,
+        email: req.body.email,
+        password: bcrypt.hashSync(req.body.password, saltRounds)
+      };
+      req.session["user_id"] = userID;
+      res.redirect("/urls");
+    }
 });
 
 // checks databse for registered user and logs them in
@@ -100,7 +110,11 @@ app.get("/login", (req, res) => {
   const templateVars = {
     user: users[req.session["user_id"]]
   };
-  res.render("login", templateVars);
+  if (req.session["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    res.render("login", templateVars);
+  }
 });
 
 // Logout user, clears cookie
@@ -111,16 +125,25 @@ app.post("/logout", (req, res) => {
 
 // redirect to the original URL when clicking on a shortURL from it's creation route
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+  if (urlDatabase[req.params.shortURL]) {
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+    res.redirect(longURL);
+  } else {
+    res.status(404).send('no URL');
+  }
 });
 
 // posts edits to the original url for logged in users editing their short URL. Redirects in the case of logged out users
 app.post("/urls/:id", (req,res) => {
-  if (urlDatabase[req.params.id].userID === req.session["user_id"]) {
+  if(!req.session["user_id"]) {
+    res.status(403).send("Please login to edit short links!");
+  } else if (urlDatabase[req.params.id].userID === users[req.session["user_id"]].id) {
     urlDatabase[req.params.id].longURL = req.body.longURL;
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("You don't own this link!");
   }
-  res.redirect("/urls");
+
 
 });
 
@@ -136,20 +159,16 @@ app.post("/urls", (req, res) => {
 
 // deletes a short URL entry from the urlDatabase if the logged in user owns the short URL
 app.post("/urls/:shortURL/delete", (req,res) => {
-  if (urlDatabase[req.params.shortURL].userID === users[req.session["user_id"]].id) {
-    delete urlDatabase[req.params.shortURL];
+  if (!req.session["user_id"]) {
+    res.status(403).send("please log in to delete a short link!");
   }
-
-  res.redirect("/urls");
+  else if (urlDatabase[req.params.shortURL].userID === users[req.session["user_id"]].id) {
+    delete urlDatabase[req.params.shortURL];
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("You don't own this!");
+  }
 });
-
-// // shows the short URL page
-// app.get(("/urls/:shortURL", (req, res) => {
-//   let templateVars = {
-//     user: users[req.session["user_id"]]
-//   }
-//   res.render("urls_show", templateVars);
-// }));
 
 // gets the new URL form to create a short URL for logged in users.
 app.get("/urls/new", (req,res) =>{
@@ -170,7 +189,15 @@ app.get("/urls/:shortURL", (req, res) => {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL
   };
+  
+  if (req.session['user_id'] === undefined) {
+    res.status(403).send("No credentials! Please login or register!");
+  } else if (urlDatabase[req.params.shortURL] != undefined && req.session['user_id'] != urlDatabase[req.params.shortURL].userID) {
+    res.status(403).send("You don't have permission to change this link!");
+  }
+
   res.render("urls_show", templateVars);
+  
 });
 
 
